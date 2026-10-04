@@ -68,7 +68,12 @@ TOOL_DEFINITIONS = [
     {
         "type": "function",
         "name": "get_expenses",
-        "description": "Get the user's expenses.",
+        "description": (
+            "Get all expenses for the current user. "
+            "Use this before updating or deleting an expense "
+            "when the user refers to an expense by amount, "
+            "category, date, or words like 'that expense'."
+        ),
         "parameters": {
             "type": "object",
             "properties": {}
@@ -78,7 +83,10 @@ TOOL_DEFINITIONS = [
     {
         "type": "function",
         "name": "update_expense",
-        "description": "Update an expense. Requires confirmation.",
+        "description": (
+            "Update an expense by its ID. "
+            "Requires confirmation from the user before execution."
+        ),
         "parameters": {
             "type": "object",
             "properties": {
@@ -99,7 +107,10 @@ TOOL_DEFINITIONS = [
     {
         "type": "function",
         "name": "delete_expense",
-        "description": "Delete an expense. Requires confirmation.",
+        "description": (
+            "Delete an expense by its ID. "
+            "Requires confirmation from the user before execution."
+        ),
         "parameters": {
             "type": "object",
             "properties": {
@@ -152,7 +163,10 @@ TOOL_DEFINITIONS = [
     {
         "type": "function",
         "name": "update_income",
-        "description": "Update income. Requires confirmation.",
+        "description": (
+            "Update income by its ID. "
+            "Requires confirmation from the user before execution."
+        ),
         "parameters": {
             "type": "object",
             "properties": {
@@ -173,7 +187,10 @@ TOOL_DEFINITIONS = [
     {
         "type": "function",
         "name": "delete_income",
-        "description": "Delete income. Requires confirmation.",
+        "description": (
+            "Delete income by its ID. "
+            "Requires confirmation from the user before execution."
+        ),
         "parameters": {
             "type": "object",
             "properties": {
@@ -287,7 +304,6 @@ TOOL_DEFINITIONS = [
 def get_system_instruction():
 
     today = date.today()
-
     yesterday = today - timedelta(days=1)
 
     return f"""
@@ -309,6 +325,14 @@ Rules:
 - Use tools for financial data.
 - Adding expenses/income can happen immediately.
 - Updating/deleting requires confirmation.
+- If the user refers to an existing expense or income
+  without giving its ID, first use the appropriate
+  get tool to find the record.
+- If multiple records could match, ask the user to
+  clarify which one they mean.
+- Never guess an ID.
+- Never execute update or delete directly.
+- The application will ask the user for confirmation.
 - Keep answers short and natural.
 """
 
@@ -321,6 +345,8 @@ def prepare_arguments(tool_name, arguments, user_id):
 
     args = dict(arguments)
 
+    # user_id is controlled by the application.
+    # Never allow Gemini to choose it.
     args["user_id"] = user_id
 
     if tool_name == "add_expense":
@@ -341,7 +367,6 @@ def execute_tool(tool_name, arguments, user_id):
     function = TOOLS.get(tool_name)
 
     if function is None:
-
         return {
             "success": False,
             "error": f"Unknown tool: {tool_name}"
@@ -362,10 +387,7 @@ def execute_tool(tool_name, arguments, user_id):
                 "success": True
             }
 
-        if isinstance(
-            result,
-            (int, float, str, list, tuple)
-        ):
+        if isinstance(result, (int, float, str, list, tuple)):
             return {
                 "success": True,
                 "data": result
@@ -386,7 +408,6 @@ def execute_tool(tool_name, arguments, user_id):
             "error": str(error)
         }
 
-
 # --------------------------------------------------
 # CHECK CONFIRMATION
 # --------------------------------------------------
@@ -400,6 +421,9 @@ def is_confirmation(message):
         "y",
         "yeah",
         "yep",
+        "yup",
+        "yas",
+        "yess",
         "sure",
         "confirm",
         "confirmed",
@@ -428,6 +452,7 @@ def is_confirmation(message):
     return None
 
 
+
 # --------------------------------------------------
 # EXECUTE PENDING ACTION
 # --------------------------------------------------
@@ -448,7 +473,7 @@ def execute_pending_action(user_id):
         user_id
     )
 
-    # Clear action after execution.
+    # Always clear the pending action after an attempt.
     del PENDING_ACTIONS[user_id]
 
     if not result.get("success"):
@@ -509,15 +534,10 @@ def run_agent(user_message, user_id):
 
     if user_id in PENDING_ACTIONS:
 
-        confirmation = is_confirmation(
-            user_message
-        )
+        confirmation = is_confirmation(user_message)
 
         if confirmation is True:
-
-            return execute_pending_action(
-                user_id
-            )
+            return execute_pending_action(user_id)
 
         if confirmation is False:
 
@@ -530,9 +550,8 @@ def run_agent(user_message, user_id):
             "or no to cancel."
         )
 
-
     # --------------------------------------------------
-    # GEMINI REQUEST
+    # INITIAL GEMINI REQUEST
     # --------------------------------------------------
 
     try:
@@ -557,130 +576,156 @@ def run_agent(user_message, user_id):
             "Please try again."
         )
 
-
     # --------------------------------------------------
-    # PROCESS TOOL CALL
+    # AGENT LOOP
     # --------------------------------------------------
 
-    for step in interaction.steps:
+    # Prevent an accidental infinite tool loop.
+    MAX_TOOL_ROUNDS = 10
 
-        if step.type != "function_call":
-            continue
+    for _ in range(MAX_TOOL_ROUNDS):
 
-        tool_name = step.name
-        arguments = step.arguments
-
-        print(
-            f"AI tool: {tool_name}"
-        )
-
-        print(
-            f"Arguments: {arguments}"
-        )
-
+        function_calls = [
+            step
+            for step in interaction.steps
+            if step.type == "function_call"
+        ]
 
         # --------------------------------------------------
-        # UPDATE / DELETE
+        # NO TOOL CALL
         # --------------------------------------------------
 
-        if tool_name in {
-            "update_expense",
-            "delete_expense",
-            "update_income",
-            "delete_income"
-        }:
+        if not function_calls:
 
-            # Store pending action.
-            PENDING_ACTIONS[user_id] = {
-                "tool_name": tool_name,
-                "arguments": arguments
-            }
-
-
-            # Build human-readable confirmation.
-            if tool_name == "delete_expense":
-
-                expense_id = arguments["expense_id"]
-
-                return (
-                    f"I found expense #{expense_id}. "
-                    f"Are you sure you want to delete it?"
-                )
-
-            if tool_name == "delete_income":
-
-                income_id = arguments["income_id"]
-
-                return (
-                    f"I found income #{income_id}. "
-                    f"Are you sure you want to delete it?"
-                )
-
-            if tool_name == "update_expense":
-
-                expense_id = arguments["expense_id"]
-                amount = arguments["amount"]
-
-                return (
-                    f"I found expense #{expense_id}. "
-                    f"Do you want to change it to ₹{amount}?"
-                )
-
-            if tool_name == "update_income":
-
-                income_id = arguments["income_id"]
-                amount = arguments["amount"]
-
-                return (
-                    f"I found income #{income_id}. "
-                    f"Do you want to change it to ₹{amount}?"
-                )
-
+            return interaction.output_text
 
         # --------------------------------------------------
-        # NORMAL TOOL
+        # PROCESS FUNCTION CALLS
         # --------------------------------------------------
 
-        result = execute_tool(
-            tool_name,
-            arguments,
-            user_id
-        )
+        function_results = []
 
+        for step in function_calls:
+
+            tool_name = step.name
+            arguments = step.arguments
+
+            print(
+                f"AI tool: {tool_name}"
+            )
+
+            print(
+                f"Arguments: {arguments}"
+            )
+
+            # --------------------------------------------------
+            # UPDATE / DELETE
+            # --------------------------------------------------
+
+            if tool_name in {
+                "update_expense",
+                "delete_expense",
+                "update_income",
+                "delete_income"
+            }:
+
+                # Store the action WITHOUT executing it.
+                PENDING_ACTIONS[user_id] = {
+                    "tool_name": tool_name,
+                    "arguments": arguments
+                }
+
+                if tool_name == "delete_expense":
+
+                    expense_id = arguments["expense_id"]
+
+                    return (
+                        f"I found expense #{expense_id}. "
+                        f"Are you sure you want to delete it?"
+                    )
+
+                if tool_name == "delete_income":
+
+                    income_id = arguments["income_id"]
+
+                    return (
+                        f"I found income #{income_id}. "
+                        f"Are you sure you want to delete it?"
+                    )
+
+                if tool_name == "update_expense":
+
+                    expense_id = arguments["expense_id"]
+                    amount = arguments["amount"]
+
+                    return (
+                        f"I found expense #{expense_id}. "
+                        f"Do you want to change it to ₹{amount}?"
+                    )
+
+                if tool_name == "update_income":
+
+                    income_id = arguments["income_id"]
+                    amount = arguments["amount"]
+
+                    return (
+                        f"I found income #{income_id}. "
+                        f"Do you want to change it to ₹{amount}?"
+                    )
+
+            # --------------------------------------------------
+            # NORMAL TOOL
+            # --------------------------------------------------
+
+            result = execute_tool(
+                tool_name,
+                arguments,
+                user_id
+            )
+
+            print(
+                f"Tool result: {result}"
+            )
+
+            # --------------------------------------------------
+            # PREPARE RESULT FOR GEMINI
+            # --------------------------------------------------
+
+            function_results.append(
+                {
+                    "type": "function_result",
+                    "name": tool_name,
+                    "call_id": step.id,
+                    "result": [
+                        {
+                            "type": "text",
+                            "text": json.dumps(
+                                result,
+                                default=str
+                            )
+                        }
+                    ]
+                }
+            )
 
         # --------------------------------------------------
-        # SEND TOOL RESULT TO GEMINI
+        # SEND ALL TOOL RESULTS BACK TO GEMINI
         # --------------------------------------------------
 
         try:
 
-            final_interaction = client.interactions.create(
+            interaction = client.interactions.create(
 
                 model=MODEL,
 
                 previous_interaction_id=interaction.id,
 
-                input=[
-                    {
-                        "type": "function_result",
-                        "name": tool_name,
-                        "call_id": step.id,
-                        "result": [
-                            {
-                                "type": "text",
-                                "text": json.dumps(
-                                    result,
-                                    default=str
-                                )
-                            }
-                        ]
-                    }
-                ],
+                input=function_results,
+
+                tools=TOOL_DEFINITIONS,
 
                 system_instruction=get_system_instruction()
             )
-
-            return final_interaction.output_text
 
         except Exception as error:
 
@@ -689,17 +734,17 @@ def run_agent(user_message, user_id):
                 error
             )
 
-            if result.get("success"):
-
-                return "Done. The operation was completed successfully."
-
             return (
-                "The operation could not be completed."
+                "I completed the tool operation, "
+                "but couldn't generate the final response."
             )
 
-
     # --------------------------------------------------
-    # NO TOOL
+    # TOOL LOOP LIMIT
     # --------------------------------------------------
 
-    return interaction.output_text
+    return (
+        "I couldn't complete that request because "
+        "the agent reached its tool-call limit."
+    )
+
