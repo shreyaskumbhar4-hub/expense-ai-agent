@@ -1,0 +1,60 @@
+```gitignore
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# Environment variables / secrets
+.env
+.env.*
+!.env.example
+
+# Local databases
+database/*.db
+database/*.sqlite
+database/*.sqlite3
+
+# Backups
+database/*backup*
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+```
+```gitignore
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# Environment variables / secrets
+.env
+.env.*
+!.env.example
+
+# Local databases
+database/*.db
+database/*.sqlite
+database/*.sqlite3
+
+# Backups
+database/*backup*
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+```

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense AI</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #f5f7fb;
+        color: #1f2937;
+    }
+
+    .app {
+        width: 100%;
+        max-width: 900px;
+        margin: 0 auto;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    header {
+        padding: 24px 20px 16px;
+        background: white;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    header h1 {
+        margin: 0;
+        font-size: 24px;
+    }
+
+    header p {
+        margin: 6px 0 0;
+        color: #6b7280;
+        font-size: 14px;
+    }
+
+    #messages {
+        flex: 1;
+        padding: 24px 20px;
+        overflow-y: auto;
+    }
+
+    .message {
+        display: flex;
+        margin-bottom: 16px;
+    }
+
+    .message.user {
+        justify-content: flex-end;
+    }
+
+    .bubble {
+        max-width: 75%;
+        padding: 12px 16px;
+        border-radius: 16px;
+        line-height: 1.5;
+        white-space: pre-wrap;
+    }
+
+    .message.ai .bubble {
+        background: white;
+        border: 1px solid #e5e7eb;
+    }
+
+    .message.user .bubble {
+        background: #2563eb;
+        color: white;
+    }
+
+    .input-area {
+        padding: 16px 20px;
+        background: white;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    form {
+        display: flex;
+        gap: 10px;
+    }
+
+    input {
+        flex: 1;
+        min-width: 0;
+        padding: 13px 15px;
+        border: 1px solid #d1d5db;
+        border-radius: 12px;
+        font-size: 16px;
+        outline: none;
+    }
+
+    input:focus {
+        border-color: #2563eb;
+    }
+
+    button {
+        border: none;
+        border-radius: 12px;
+        padding: 0 20px;
+        background: #2563eb;
+        color: white;
+        font-size: 16px;
+        cursor: pointer;
+    }
+
+    button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .typing {
+        color: #6b7280;
+        font-style: italic;
+    }
+
+    @media (max-width: 600px) {
+        .bubble {
+            max-width: 88%;
+        }
+
+        header {
+            padding: 18px 16px 14px;
+        }
+
+        #messages {
+            padding: 20px 16px;
+        }
+
+        .input-area {
+            padding: 12px 16px;
+        }
+    }
+</style>
+
+</head>
+
+<body>
+
+<div class="app">
+
+<header>
+    <h1>💰 Expense AI</h1>
+    <p>Your personal AI expense assistant</p>
+</header>
+
+<main id="messages">
+    <div class="message ai">
+        <div class="bubble">
+            Hi! I’m your expense assistant. Ask me about your spending or income.
+        </div>
+    </div>
+</main>
+
+<div class="input-area">
+    <form id="chat-form">
+
+        <input
+            id="message-input"
+            type="text"
+            placeholder="e.g. How much did I spend today?"
+            autocomplete="off"
+            required
+        >
+
+        <button id="send-button" type="submit">
+            Send
+        </button>
+
+    </form>
+</div>
+
+</div>
+
+<script>
+    const form = document.getElementById("chat-form");
+    const input = document.getElementById("message-input");
+    const button = document.getElementById("send-button");
+    const messages = document.getElementById("messages");
+
+    const USER_ID = 1;
+
+
+    function addMessage(text, sender) {
+        const message = document.createElement("div");
+        message.className = `message ${sender}`;
+
+        const bubble = document.createElement("div");
+        bubble.className = "bubble";
+        bubble.textContent = text;
+
+        message.appendChild(bubble);
+        messages.appendChild(message);
+
+        messages.scrollTop = messages.scrollHeight;
+    }
+
+
+    form.addEventListener("submit", async function(event) {
+        event.preventDefault();
+
+        const message = input.value.trim();
+
+        if (!message) {
+            return;
+        }
+
+        addMessage(message, "user");
+
+        input.value = "";
+        button.disabled = true;
+        input.disabled = true;
+
+        addMessage("Thinking...", "ai");
+
+        const thinkingBubble =
+            messages.lastElementChild.querySelector(".bubble");
+
+        try {
+            const response = await fetch("/chat", {
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+                    user_id: USER_ID,
+                    message: message
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error("Server error");
+            }
+
+            const data = await response.json();
+
+            thinkingBubble.textContent = data.response;
+
+        } catch (error) {
+            thinkingBubble.textContent =
+                "Sorry, I couldn't connect to the server.";
+
+            console.error(error);
+
+        } finally {
+            button.disabled = false;
+            input.disabled = false;
+            input.focus();
+        }
+    });
+</script>
+
+</body>
+</html>
