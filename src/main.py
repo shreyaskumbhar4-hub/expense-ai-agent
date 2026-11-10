@@ -7,6 +7,7 @@ from src import database
 from src.agent import run_agent
 from src.analytics import get_category_spending
 from src.insights import get_spending_insights
+from src.gamification import get_user_gamification_stats
 
 app = FastAPI(title="Expense AI Agent")
 
@@ -39,6 +40,8 @@ def get_dashboard_data(user_id: int):
         
         # 2. Fetch spending insights and totals
         insights_data = get_spending_insights(user_id=user_id)
+
+        gamification_data = get_user_gamification_stats(user_id=user_id)
         
         # 3. Fetch current wallet balance / total income
         conn = sqlite3.connect("database/expense_tracker.db")
@@ -62,6 +65,7 @@ def get_dashboard_data(user_id: int):
                 "total_spent": total_spent,
                 "current_balance": current_balance
             },
+            "gamification": gamification_data,
             "insights": insights_data,
             "category_breakdown": analytics_data["breakdown"]
         }

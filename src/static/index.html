@@ -4,16 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Expense AI — Personal Expense Assistant</title>
-
+    <!-- Canvas Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <style>
         :root {
-            --primary: #4f46e5;
-            --primary-hover: #4338ca;
-            --bg-color: #f8fafc;
-            --card-bg: #ffffff;
-            --text-main: #1e293b;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --text-main: #0f172a;
             --text-muted: #64748b;
             --border-color: #e2e8f0;
+            --accent-gold: #f59e0b;
+            --accent-fire: #ef4444;
         }
 
         * {
@@ -23,47 +26,64 @@
         body {
             margin: 0;
             font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: var(--bg-color);
+            background: var(--bg-gradient);
             color: var(--text-main);
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            padding: 20px;
         }
 
         .app {
             width: 100%;
-            max-width: 680px;
-            height: 90vh;
-            max-height: 800px;
+            max-width: 720px;
+            height: 85vh;
+            max-height: 850px;
             background: var(--card-bg);
-            border-radius: 20px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(12px);
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            border: 1px solid var(--border-color);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: appAppear 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes appAppear {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
         }
 
         header {
-            padding: 20px 24px;
-            background: var(--card-bg);
+            padding: 18px 24px;
+            background: #ffffff;
             border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-brand {
             display: flex;
             align-items: center;
             gap: 12px;
         }
 
         .header-icon {
-            font-size: 28px;
+            font-size: 26px;
             background: #e0e7ff;
-            padding: 8px;
-            border-radius: 12px;
+            padding: 10px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         header h1 {
             margin: 0;
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 700;
             color: var(--text-main);
         }
@@ -71,7 +91,40 @@
         header p {
             margin: 2px 0 0;
             color: var(--text-muted);
+            font-size: 12px;
+        }
+
+        /* Gamification Header Stats */
+        .gamification-badges {
+            display: flex;
+            gap: 10px;
+        }
+
+        .badge {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 6px 12px;
+            border-radius: 20px;
             font-size: 13px;
+            font-weight: 700;
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .badge:hover {
+            transform: scale(1.08);
+        }
+
+        .badge-level {
+            background: #fef3c7;
+            color: #d97706;
+            border: 1px solid #fde68a;
+        }
+
+        .badge-streak {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fca5a5;
         }
 
         #messages {
@@ -81,17 +134,18 @@
             display: flex;
             flex-direction: column;
             gap: 16px;
-            background: #fafafa;
+            background: #f8fafc;
+            scroll-behavior: smooth;
         }
 
         .message {
             display: flex;
-            animation: fadeIn 0.3s ease;
+            animation: messageSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(6px); }
-            to { opacity: 1; transform: translateY(0); }
+        @keyframes messageSlideIn {
+            from { opacity: 0; transform: translateY(12px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
         .message.user {
@@ -100,16 +154,17 @@
 
         .bubble {
             max-width: 80%;
-            padding: 12px 18px;
-            border-radius: 16px;
+            padding: 14px 20px;
+            border-radius: 20px;
             line-height: 1.5;
             font-size: 14px;
             white-space: pre-wrap;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+            word-wrap: break-word;
         }
 
         .message.ai .bubble {
-            background: white;
+            background: #ffffff;
             border: 1px solid var(--border-color);
             color: var(--text-main);
             border-top-left-radius: 4px;
@@ -119,48 +174,51 @@
             background: var(--primary);
             color: white;
             border-top-right-radius: 4px;
+            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
         }
 
         .input-area {
-            padding: 16px 24px;
-            background: white;
+            padding: 16px 20px;
+            background: #ffffff;
             border-top: 1px solid var(--border-color);
         }
 
         form {
             display: flex;
-            gap: 8px;
+            gap: 10px;
             align-items: center;
         }
 
         input {
             flex: 1;
             min-width: 0;
-            padding: 12px 16px;
+            padding: 14px 18px;
             border: 1px solid var(--border-color);
-            border-radius: 12px;
+            border-radius: 14px;
             font-size: 14px;
             outline: none;
             background: #f8fafc;
-            transition: all 0.2s ease;
+            transition: all 0.25s ease;
         }
 
         input:focus {
             border-color: var(--primary);
-            background: white;
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+            background: #ffffff;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
         }
 
         select {
-            padding: 0 8px;
-            height: 46px;
+            padding: 0 10px;
+            height: 48px;
             border: 1px solid var(--border-color);
-            border-radius: 12px;
+            border-radius: 14px;
             background: #f1f5f9;
             color: var(--text-main);
             font-size: 13px;
+            font-weight: 500;
             cursor: pointer;
             outline: none;
+            transition: background 0.2s;
         }
 
         select:hover {
@@ -169,16 +227,20 @@
 
         .action-btn {
             border: none;
-            border-radius: 12px;
-            width: 46px;
-            height: 46px;
+            border-radius: 14px;
+            width: 48px;
+            height: 48px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 18px;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             flex-shrink: 0;
+        }
+
+        .action-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
         }
 
         #mic-btn {
@@ -187,15 +249,17 @@
             border: 1px solid var(--border-color);
         }
 
-        #mic-btn:hover {
-            background: #e2e8f0;
-        }
-
         #mic-btn.recording {
             background: #fee2e2;
             color: #dc2626;
             border-color: #fca5a5;
-            animation: pulse 1.5s infinite;
+            animation: pulseRecord 1.2s infinite;
+        }
+
+        @keyframes pulseRecord {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
+            70% { transform: scale(1.06); box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
         }
 
         #speaker-btn {
@@ -204,46 +268,39 @@
             border: 1px solid var(--border-color);
         }
 
-        #speaker-btn:hover {
-            background: #e2e8f0;
-        }
-
         #speaker-btn.active {
             background: #e0e7ff;
             color: var(--primary);
             border-color: #c7d2fe;
         }
 
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-
         #send-button {
             background: var(--primary);
             color: white;
-            padding: 0 18px;
-            height: 46px;
+            padding: 0 20px;
+            width: auto;
             font-weight: 600;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
         }
 
-        #send-button:hover {
+        #send-button:hover:not(:disabled) {
             background: var(--primary-hover);
         }
 
-        #send-button:disabled, #mic-btn:disabled, #speaker-btn:disabled {
-            opacity: 0.6;
+        button:disabled, select:disabled, input:disabled {
+            opacity: 0.55;
             cursor: not-allowed;
         }
 
         @media (max-width: 650px) {
+            body { padding: 0; }
             .app {
                 height: 100vh;
                 max-height: none;
                 border-radius: 0;
                 border: none;
             }
+            .header-brand p { display: none; }
         }
     </style>
 </head>
@@ -252,16 +309,30 @@
 
 <div class="app">
     <header>
-        <div class="header-icon">💰</div>
-        <div>
-            <h1>Expense AI Assistant</h1>
-            <p>Track expenses, budgets, and insights with voice or text</p>
+        <div class="header-brand">
+            <div class="header-icon">💳</div>
+            <div>
+                <h1>Expense AI</h1>
+                <p>Personal Finance Assistant</p>
+            </div>
+        </div>
+        
+        <!-- Gamification Header Stats -->
+        <div class="gamification-badges">
+            <div class="badge badge-level" title="Your current level">
+                <span>⭐ Level</span>
+                <span id="user-level">1</span>
+            </div>
+            <div class="badge badge-streak" title="Daily consecutive streak">
+                <span>🔥</span>
+                <span id="user-streak">1</span>
+            </div>
         </div>
     </header>
 
     <main id="messages">
         <div class="message ai">
-            <div class="bubble">Hi! I’m your expense assistant. Type or speak to record expenses or check your totals!</div>
+            <div class="bubble">Hi! I’m your AI expense assistant. Log an expense or ask me for financial insights to earn points! 🚀</div>
         </div>
     </main>
 
@@ -276,11 +347,11 @@
             >
             <button id="mic-btn" class="action-btn" type="button" title="Voice Input">🎤</button>
             <button id="speaker-btn" class="action-btn" type="button" title="Text-to-Speech (Muted)">🔇</button>
-            <select id="voice-select" title="Choose Voice Gender">
-                <option value="female">Female</option>
-                <option value="male">Male</option>
+            <select id="voice-select" title="Choose Voice Accent">
+                <option value="female">Female Voice</option>
+                <option value="male">Male Voice</option>
             </select>
-            <button id="send-button" class="action-btn" type="submit" style="width: auto;">Send</button>
+            <button id="send-button" class="action-btn" type="submit">Send</button>
         </form>
     </div>
 </div>
@@ -293,8 +364,20 @@
     const speakerButton = document.getElementById("speaker-btn");
     const voiceSelect = document.getElementById("voice-select");
     const messages = document.getElementById("messages");
+    const userLevelEl = document.getElementById("user-level");
+    const userStreakEl = document.getElementById("user-streak");
 
     const USER_ID = 1;
+
+    function triggerConfetti() {
+        if (typeof confetti === 'function') {
+            confetti({
+                particleCount: 120,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
+        }
+    }
 
     function addMessage(text, sender) {
         const message = document.createElement("div");
@@ -352,10 +435,7 @@
     }
 
     micButton.addEventListener("click", () => {
-        if (!recognition) {
-            alert("Voice input is not supported in this browser.");
-            return;
-        }
+        if (!recognition) return;
 
         if (isRecording) {
             stopRecordingState();
@@ -370,7 +450,7 @@
         }
     });
 
-    // --- Text-to-Speech (Speaker Toggle & Voice Selection) ---
+    // --- Text-to-Speech ---
     let isAudioEnabled = false;
     let systemVoices = [];
 
@@ -384,7 +464,7 @@
         window.speechSynthesis.onvoiceschanged = loadVoices;
     }
 
-    function toggleSpeaker() {
+    speakerButton.addEventListener("click", () => {
         isAudioEnabled = !isAudioEnabled;
         if (isAudioEnabled) {
             speakerButton.textContent = "🔊";
@@ -394,33 +474,25 @@
             speakerButton.textContent = "🔇";
             speakerButton.classList.remove("active");
             speakerButton.title = "Text-to-Speech (Muted)";
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-            }
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
         }
-    }
-
-    speakerButton.addEventListener("click", toggleSpeaker);
+    });
 
     function getSelectedVoice() {
         if (!systemVoices.length) loadVoices();
-        const preference = voiceSelect.value; // 'female' or 'male'
-
-        // Filter English voices
+        const preference = voiceSelect.value;
         const englishVoices = systemVoices.filter(v => v.lang.startsWith('en'));
         const voicesToSearch = englishVoices.length ? englishVoices : systemVoices;
 
-        // Try to heuristically match female or male voice names provided by the OS/browser
         let matchedVoice = voicesToSearch.find(v => {
             const name = v.name.toLowerCase();
             if (preference === 'female') {
-                return name.includes('female') || name.includes('zira') || name.includes('samantha') || name.includes('victoria') || name.includes('karen') || name.includes('hazel') || name.includes('aria') || name.includes('jenny');
+                return name.includes('female') || name.includes('zira') || name.includes('samantha') || name.includes('victoria') || name.includes('aria');
             } else {
-                return name.includes('male') || name.includes('david') || name.includes('mark') || name.includes('george') || name.includes('james') || name.includes('ryan') || name.includes('guy');
+                return name.includes('male') || name.includes('david') || name.includes('mark') || name.includes('george') || name.includes('james');
             }
         });
 
-        // Fallback to the first available voice if specific keywords aren't found
         if (!matchedVoice && voicesToSearch.length > 0) {
             matchedVoice = voicesToSearch[preference === 'female' ? 0 : Math.min(1, voicesToSearch.length - 1)];
         }
@@ -430,15 +502,13 @@
 
     function speakText(text) {
         if (!isAudioEnabled || !('speechSynthesis' in window)) return;
-        window.speechSynthesis.cancel(); // Stop any ongoing speech
+        window.speechSynthesis.cancel();
         
         const utterance = new SpeechSynthesisUtterance(text);
         const voice = getSelectedVoice();
-        if (voice) {
-            utterance.voice = voice;
-        }
+        if (voice) utterance.voice = voice;
         utterance.rate = 1.0;
-        utterance.pitch = voiceSelect.value === 'female' ? 1.2 : 0.9; // Slight pitch tuning
+        utterance.pitch = voiceSelect.value === 'female' ? 1.1 : 0.95;
         
         window.speechSynthesis.speak(utterance);
     }
@@ -447,9 +517,7 @@
     form.addEventListener("submit", async function(event) {
         event.preventDefault();
 
-        if (isRecording) {
-            stopRecordingState();
-        }
+        if (isRecording) stopRecordingState();
 
         const message = input.value.trim();
         if (!message) return;
@@ -467,30 +535,36 @@
         try {
             const response = await fetch("/chat", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     user_id: USER_ID,
                     message: message
                 })
             });
 
-            if (!response.ok) {
-                throw new Error("Server error"); 
-                
-            }
+            if (!response.ok) throw new Error("Server error");
 
             const data = await response.json();
             thinkingBubble.textContent = data.response;
 
-            // Speak response if audio is enabled
+            // Gamification UI Updates
+            if (data.gamification) {
+                if (data.gamification.level !== undefined) {
+                    userLevelEl.textContent = data.gamification.level;
+                }
+                if (data.gamification.streak !== undefined) {
+                    userStreakEl.textContent = data.gamification.streak;
+                }
+                if (data.gamification.leveled_up) {
+                    triggerConfetti();
+                }
+            }
+
             speakText(data.response);
 
         } catch (error) {
             thinkingBubble.textContent = "Sorry, I couldn't connect to the server.";
             console.error(error);
-
         } finally {
             sendButton.disabled = false;
             input.disabled = false;

@@ -1,6 +1,7 @@
 import json
 from datetime import date, timedelta
 
+
 from google import genai
 
 from src.tools import TOOLS
@@ -374,6 +375,21 @@ TOOL_DEFINITIONS = [
             },
             "required": ["user_id"]
         }
+    },
+    {
+        "type": "function",
+        "name": "check_user_level_and_points",
+        "description": "Check the user's current level, points, and points needed for the next level.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "user_id": {
+                    "type": "integer",
+                    "description": "The ID of the user."
+                }
+            },
+            "required": ["user_id"]
+        }
     }
     
     
@@ -490,6 +506,7 @@ def execute_tool(tool_name, arguments, user_id):
             "success": False,
             "error": str(error)
         }
+
 
 # --------------------------------------------------
 # CHECK CONFIRMATION
