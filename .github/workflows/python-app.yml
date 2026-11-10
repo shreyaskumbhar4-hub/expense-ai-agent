@@ -25,10 +25,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Set up Environment Variables
-        run: |
-          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> $GITHUB_ENV
-
       - name: Initialize Database Directories
         run: |
           mkdir -p database
@@ -36,7 +32,9 @@ jobs:
       - name: Check Python syntax
         run: python -m compileall -q src
 
-      - name: Run Tests (if available)
+      - name: Run Tests
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           if [ -d "tests" ]; then
             pytest
