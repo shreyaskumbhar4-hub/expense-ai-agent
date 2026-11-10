@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
+from src import database
 from fastapi.responses import FileResponse
 
 from src.agent import run_agent

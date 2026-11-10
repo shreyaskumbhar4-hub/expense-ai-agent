@@ -203,11 +203,11 @@ python -m pytest src
 Or run individual tests:
 
 ```bash
-python src/test_expense.py
-python src/test_income.py
-python src/test_balance.py
-python src/test_agent.py
-python src/test_tools.py
+python tests/test_income.py
+python tests/test_balance.py
+python tests/test_agent.py
+python tests/test_tools.py
+python tests/test_expense.py
 ```
 
 ## 🔐 Security
@@ -245,14 +245,14 @@ The current frontend uses a fixed demo user ID and should **not** be exposed pub
 * [x] Confirmation flow
 * [x] FastAPI backend
 * [x] Web chat interface
+* [x] Daily budget
+* [x] Weekly budget
+* [x] Monthly budget
+* [x] Yearly budget
+* [x] Budget rollover
 
 ### Next
 
-* [ ] Daily budget
-* [ ] Weekly budget
-* [ ] Monthly budget
-* [ ] Yearly budget
-* [ ] Budget rollover
 * [ ] Reserve pool
 * [ ] Agent Points
 * [ ] User levels
