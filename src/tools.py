@@ -22,6 +22,13 @@ from src.summary import (
 )
 
 
+from src.budget import (
+    set_budget, 
+    get_budget_status
+)
+
+
+
 TOOLS = {
     "add_expense": add_expense,
     "get_expenses": get_expenses,
@@ -39,4 +46,7 @@ TOOLS = {
     "get_weekly_summary": get_weekly_summary,
     "get_monthly_summary": get_monthly_summary,
     "get_yearly_summary": get_yearly_summary,
+    
+    "set_budget": set_budget,
+    "get_budget_status": get_budget_status
 }
