@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  check:
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
@@ -25,5 +25,21 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Set up Environment Variables
+        run: |
+          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> $GITHUB_ENV
+
+      - name: Initialize Database Directories
+        run: |
+          mkdir -p database
+
       - name: Check Python syntax
         run: python -m compileall -q src
+
+      - name: Run Tests (if available)
+        run: |
+          if [ -d "tests" ]; then
+            pytest
+          else
+            echo "No tests directory found, skipping pytest."
+          fi
