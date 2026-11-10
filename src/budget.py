@@ -1,14 +1,20 @@
+import os
 import sqlite3
 from datetime import datetime, timedelta
 
 DB_PATH = "database/expense_tracker.db"
 
-def set_budget(user_id: int, period: str, amount: float, category: str = "overall", is_rollover: int = 0):
+def _get_connection():
+    os.makedirs("database", exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
+    return conn
+
+def set_budget(user_id: int, period: str, amount: float, category: str = "overall", is_rollover: int = 0):
+    conn = _get_connection()
     cursor = conn.cursor()
     
-    # Check if budget already exists for this period & category, update it or insert new
+    # Check if budget already exists for this period & category
     cursor.execute(
         """
         SELECT id FROM budgets WHERE user_id = ? AND period = ? AND category = ?
@@ -40,8 +46,7 @@ def calculate_rollover_amount(user_id: int, period: str, base_limit: float) -> f
     """
     Calculates unspent money from the previous period if rollover is enabled.
     """
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = _get_connection()
     cursor = conn.cursor()
     
     now = datetime.now()
@@ -64,8 +69,7 @@ def calculate_rollover_amount(user_id: int, period: str, base_limit: float) -> f
     return rollover_added
 
 def get_budget_status(user_id: int, period: str = "daily"):
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = _get_connection()
     cursor = conn.cursor()
     
     # Fetch budget limit and rollover flag
