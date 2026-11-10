@@ -27,6 +27,9 @@ from src.budget import (
     get_budget_status
 )
 
+from src.analytics import get_category_spending
+
+from src.insights import get_spending_insights
 
 
 TOOLS = {
@@ -48,5 +51,9 @@ TOOLS = {
     "get_yearly_summary": get_yearly_summary,
     
     "set_budget": set_budget,
-    "get_budget_status": get_budget_status
+    "get_budget_status": get_budget_status,
+
+    "get_category_spending" :get_category_spending,
+
+    "get_spending_insights": get_spending_insights
 }

@@ -250,13 +250,13 @@ The current frontend uses a fixed demo user ID and should **not** be exposed pub
 * [x] Monthly budget
 * [x] Yearly budget
 * [x] Budget rollover
+* [x] Spending insights
 
 ### Next
 
 * [ ] Reserve pool
 * [ ] Agent Points
 * [ ] User levels
-* [ ] Spending insights
 * [ ] Dashboard
 * [ ] Voice input
 * [ ] Authentication

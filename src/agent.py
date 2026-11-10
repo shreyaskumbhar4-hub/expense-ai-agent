@@ -344,7 +344,39 @@ TOOL_DEFINITIONS = [
                 "period"
             ]
         }
+    },
+    {
+        "type": "function",
+        "name": "get_category_spending",
+        "description": "Get a breakdown of total expenses grouped by category for a specific user.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "user_id": {
+                    "type": "integer",
+                    "description": "The ID of the user."
+                }
+            },
+            "required": ["user_id"]
+        }
+    },
+    {
+        "type": "function",
+        "name": "get_spending_insights",
+        "description": "Get insights about the user's spending patterns.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "user_id": {
+                    "type": "integer",
+                    "description": "The ID of the user."
+                }
+            },
+            "required": ["user_id"]
+        }
     }
+    
+    
 ]
 
 
