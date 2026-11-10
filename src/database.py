@@ -45,6 +45,20 @@ create table if not exists income (
     foreign key (user_id) references users(id)
 )
 """)
+
+
+
+connection.execute("""
+CREATE TABLE IF NOT EXISTS budgets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    period TEXT NOT NULL, -- 'daily', 'weekly', 'monthly', 'yearly'
+    amount REAL NOT NULL,
+    category TEXT DEFAULT 'overall', -- 'overall' or specific categories like 'food'
+    is_rollover BOOLEAN DEFAULT 0, -- 1 for enabled, 0 for disabled
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)""")
+
 # connection.execute("""
 # INSERT INTO users (
 #     name,
@@ -87,6 +101,7 @@ create table if not exists income (
 # ))
 # connection.execute("DELETE FROM income")
 
+
 cursor = connection.execute("""
 SELECT * FROM users
 """)
@@ -99,7 +114,7 @@ SELECT * FROM income
 rows1 = cursor1.fetchall()
 
 connection.commit()
+connection.close()
 print(rows)
 print(rows1)
 print("Database connected successfully")
-connection.close()

@@ -293,6 +293,57 @@ TOOL_DEFINITIONS = [
                 "end_date"
             ]
         }
+    },
+    {
+        "type": "function",
+        "name": "set_budget",
+        "description": "Set or update a budget limit for a specific period (daily, weekly, monthly, yearly).",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "user_id": {
+                    "type": "integer"
+                },
+                "period": {
+                    "type": "string",
+                    "description": "daily, weekly, monthly, or yearly"
+                },
+                "amount": {
+                    "type": "number"
+                },
+                "category": {
+                    "type": "string",
+                    "description": "default is overall"
+                }
+            },
+            "required": [
+                "user_id",
+                "period",
+                "amount"
+            ]
+        }
+    },
+
+    {
+        "type": "function",
+        "name": "get_budget_status",
+        "description": "Get the current budget limit, spent amount, remaining balance, and percentage used for a period.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "user_id": {
+                    "type": "integer"
+                },
+                "period": {
+                    "type": "string",
+                    "description": "daily, weekly, monthly, or yearly"
+                }
+            },
+            "required": [
+                "user_id",
+                "period"
+            ]
+        }
     }
 ]
 

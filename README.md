@@ -151,7 +151,7 @@ Do **not** commit your API key to GitHub.
 Start the FastAPI server:
 
 ```bash
-uvicorn src.main:app --reload
+python -m uvicorn src.main:app --reload
 ```
 
 Open:
